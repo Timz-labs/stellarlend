@@ -168,7 +168,7 @@ StellarLend/
 ### Quickstart with Docker
 
 ```bash
-git clone https://github.com/Timothy2025-20/stellarlend
+git clone https://github.com/Timz-labs/stellarlend
 cd stellarlend
 cp .env.example .env
 docker compose up --build
