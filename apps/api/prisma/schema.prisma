@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  stellarPubkey String?  @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  loanRequests  LoanRequestRecord[]
+  fundedLoans   LoanRecord[]        @relation("LenderLoans")
+}
+
+model LoanRequestRecord {
+  id                String   @id @default(uuid())
+  onChainId         BigInt   @unique
+  borrowerId        String
+  borrower          User     @relation(fields: [borrowerId], references: [id])
+  borrowToken       String
+  borrowAmount      String
+  collateralToken   String
+  collateralAmount  String
+  interestRateBps   Int
+  termDays          Int
+  status            String   @default("Requested")
+  txHash            String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  loan              LoanRecord?
+}
+
+model LoanRecord {
+  id              String             @id @default(uuid())
+  requestId       String             @unique
+  request         LoanRequestRecord  @relation(fields: [requestId], references: [id])
+  lenderId        String
+  lender          User               @relation("LenderLoans", fields: [lenderId], references: [id])
+  principal       String
+  interestOwed    String
+  fundedAt        Int
+  dueAt           Int
+  repaidAmount    String             @default("0")
+  status          String             @default("Active")
+  fundTxHash      String?
+  repayTxHash     String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
