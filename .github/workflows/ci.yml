@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Soroban contracts ──────────────────────────────────────────────────────
+  contracts:
+    name: Build & Lint Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32v1-none
+
+      - name: Cache Rust
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Install stellar-cli
+        run: cargo install --locked stellar-cli
+
+      - name: Build contracts
+        run: stellar contract build
+
+      - name: Lint contracts (clippy)
+        run: |
+          cargo clippy --manifest-path contracts/lending/Cargo.toml \
+            --target wasm32v1-none -- -D warnings
+          cargo clippy --manifest-path contracts/oracle/Cargo.toml \
+            --target wasm32v1-none -- -D warnings
+
+  # ── NestJS API ────────────────────────────────────────────────────────────
+  api:
+    name: Test & Lint API
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: apps/api/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint -- --max-warnings 0
+
+      - name: Run tests
+        run: npm test -- --passWithNoTests --forceExit
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+          JWT_SECRET: test_secret_for_ci_only
+          STELLAR_RPC_URL: https://soroban-testnet.stellar.org
+          LENDING_CONTRACT_ID: CCEJCHUANEQRTC2YQ7PEDH773I272DRLRWKAFZS4MBXWUXXARMFYM6MI
+          ORACLE_CONTRACT_ID: CBOE6DS7WYIS6LDQ5OAC3XUZG3LYLL5WNTO2CYTY5GSS2RAKG7JQWMSX
+
+  # ── Next.js frontend ──────────────────────────────────────────────────────
+  frontend:
+    name: Type Check & Lint Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: apps/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint -- --max-warnings 0
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
+          NEXT_PUBLIC_LENDING_CONTRACT_ID: CCEJCHUANEQRTC2YQ7PEDH773I272DRLRWKAFZS4MBXWUXXARMFYM6MI
+          NEXT_PUBLIC_ORACLE_CONTRACT_ID: CBOE6DS7WYIS6LDQ5OAC3XUZG3LYLL5WNTO2CYTY5GSS2RAKG7JQWMSX
+          NEXT_PUBLIC_NETWORK: testnet
