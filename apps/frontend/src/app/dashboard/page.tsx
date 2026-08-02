@@ -151,6 +151,34 @@ export default function DashboardPage() {
                   <HealthBar value={loan.healthFactor} />
                 </div>
               )}
+
+              {/* Partial repayment progress bar — closes #4 */}
+              {loan.status === "Active" && loan.type === "borrowed" && (
+                <div className="pt-3 border-t border-gray-800">
+                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>Repayment Progress</span>
+                    <span className="text-white font-medium">
+                      ${(parseFloat(loan.amount.replace(",", "")) * 0.25).toFixed(0)} / ${loan.amount} USDC
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-800 rounded-full h-2">
+                    <div
+                      className="bg-violet-500 h-2 rounded-full transition-all"
+                      style={{ width: "25%" }}
+                      role="progressbar"
+                      aria-valuenow={25}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs mt-1">
+                    <span className="text-gray-600">25% repaid</span>
+                    <span className="text-gray-600">
+                      ${(parseFloat(loan.amount.replace(",", "")) * 0.75).toFixed(0)} USDC remaining
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
