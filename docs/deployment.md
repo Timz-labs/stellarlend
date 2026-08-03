@@ -39,29 +39,24 @@ stellar contract invoke --id $LENDING_ID \
   --source deployer --network testnet \
   -- initialize --admin $DEPLOYER_ADDR --oracle $ORACLE_ID
 
+# Configure Band Protocol feed adapter (on-chain Band feed contract)
+# Replace <BAND_ORACLE_ADDRESS> with the deployed Band feed contract ID.
+stellar contract invoke --id $ORACLE_ID \
+  --source deployer --network testnet \
+  -- set_band_oracle \
+  --admin $DEPLOYER_ADDR \
+  --band <BAND_ORACLE_ADDRESS>
+
 echo "Oracle:  $ORACLE_ID"
 echo "Lending: $LENDING_ID"
-```
 
-### 2. Set Oracle Prices
+### 2. Price feeds
 
-```bash
-# Set XLM price ($0.10 = 1000000 in 7-decimal format)
-stellar contract invoke --id $ORACLE_ID \
-  --source deployer --network testnet \
-  -- set_price \
-  --admin $DEPLOYER_ADDR \
-  --token <XLM_SAC_ADDRESS> \
-  --price 1000000
-
-# Set USDC price ($1.00 = 10000000)
-stellar contract invoke --id $ORACLE_ID \
-  --source deployer --network testnet \
-  -- set_price \
-  --admin $DEPLOYER_ADDR \
-  --token <USDC_SAC_ADDRESS> \
-  --price 10000000
-```
+Band Protocol provides decentralized price feeds on mainnet. There is no
+manual `set_price` step on production — prices are provided by Band's on-chain
+aggregators. For testnet or emergency scenarios the contract still supports a
+cached admin price (used if present). Configure Band feeds off-chain and set
+`BAND` feed addresses using `set_band_oracle` as shown above.
 
 ### 3. Configure Environment
 

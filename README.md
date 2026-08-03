@@ -49,7 +49,7 @@ StellarLend is different — **fixed-rate, peer-to-peer, term-based lending**.
 | **Lending** | Liquidation bonus | 5% bonus for liquidators |
 | **Lending** | Default claim | Lender claims collateral after term expires |
 | **Lending** | Loan cancellation | Borrower cancels before funding, collateral returned |
-| **Oracle** | Admin price feeds | Token prices in 7-decimal USD format |
+| **Oracle** | Band Protocol price feeds | Token prices in 7-decimal USD format |
 | **API** | Build unsigned XDR | Never touches private keys |
 | **API** | Submit signed transactions | Frontend signs, API submits |
 | **API** | Loan state persistence | PostgreSQL + Prisma |
